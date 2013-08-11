@@ -1,38 +1,40 @@
 {
-	"name": "docpad-plugin-yourpluginname",
-	"version": "2.0.0",
-	"description": "DocPad plugin that adds the ability to render Something to Something Else",
-	"homepage": "https://github.com/yourgithubusername/docpad-plugin-yourpluginname",
-	"keywords": [
-		"docpad",
-		"docpad-plugin",
-		"something",
-		"somethingelse"
-	],
-	"author": "Copyright holders name <copyright holder's email> (copyright holder's website url)",
-	"maintainers": [
-		"Your name <your email> (your github url)"
-	],
-	"contributors": [
-		"Your name <your email> (your github url)"
-	],
-	"bugs": {
-		"url": "https://github.com/yourgithubusername/docpad-plugin-yourpluginname/issues"
-	},
-	"repository" : {
-		"type": "git",
-		"url": "https://github.com/yourgithubusername/docpad-plugin-yourpluginname.git"
-	},
-	"engines" : {
-		"node": ">=0.8",
-		"docpad": ">=6"
-	},
-	"dependencies": {},
-	"devDependencies": {
-		"coffee-script": "~1.6.2"
-	},
-	"main": "./out/yourpluginname.plugin.js",
-	"scripts": {
-		"test": "node ./out/yourpluginname.test.js"
-	}
+  "name": "docpad-plugin-restapi",
+  "version": "2.0.0",
+  "description": "Docpad plugin that supplies a REST API for interacting with Docpad files and documents",
+  "homepage": "https://github.com/docpad/docpad-plugin-restapi",
+  "keywords": [
+    "docpad",
+    "docpad-plugin",
+    "layouts",
+    "rest-api",
+    "REST",
+    "API",
+    "GUI"
+  ],
+  "author": "Neil Taylor <neil.t@myplanetdigital.com> http://www.myplanetdigital.com",
+  "maintainers": [],
+  "contributors": [],
+  "bugs": {
+    "url": "https://github.com/docpad/docpad-plugin-restapi/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/docpad/docpad-plugin-restapi/issues"
+  },
+  "engines": {
+    "node": ">=0.8",
+    "docpad": ">=6"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "coffee-script": "~1.6.2",
+    "joe": "~1.2.0",
+    "joe-reporter-console": "~1.2.1"
+  },
+  "main": "./out/restapi.plugin.js",
+  "scripts": {
+    "test": "node ./out/restapi.test.js"
+  }
 }
