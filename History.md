@@ -1,4 +1,4 @@
 ## History
 
-v2.0.0 April 17, 2013
-	- Initial working version
+- v2.0.0 August 13, 2013
+	- Initial release

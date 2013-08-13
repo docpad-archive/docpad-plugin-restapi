@@ -1,20 +1,24 @@
 {
   "name": "docpad-plugin-restapi",
   "version": "2.0.0",
-  "description": "Docpad plugin that supplies a REST API for interacting with Docpad files and documents",
+  "description": "Add a REST API to your DocPad project for interacting with DocPad files and documents",
   "homepage": "https://github.com/docpad/docpad-plugin-restapi",
   "keywords": [
     "docpad",
     "docpad-plugin",
-    "layouts",
-    "rest-api",
-    "REST",
-    "API",
-    "GUI"
+    "crud",
+    "rest",
+    "api"
   ],
-  "author": "Neil Taylor <neil.t@myplanetdigital.com> http://www.myplanetdigital.com",
-  "maintainers": [],
-  "contributors": [],
+  "author": "Bevry Pty Ltd <us@bevry.me> (http://bevry.me)",
+  "maintainers": [
+    "Neil Taylor <neil.t@myplanetdigital.com> (https://github.com/neilbaylorrulez)",
+    "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
+  ],
+  "contributors": [
+    "Neil Taylor <neil.t@myplanetdigital.com> (https://github.com/neilbaylorrulez)",
+    "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
+  ],
   "bugs": {
     "url": "https://github.com/docpad/docpad-plugin-restapi/issues"
   },
@@ -23,15 +27,18 @@
     "url": "https://github.com/docpad/docpad-plugin-restapi/issues"
   },
   "engines": {
-    "node": ">=0.8",
-    "docpad": ">=6"
+    "node": ">=0.8"
   },
   "dependencies": {
+    "gitpad": "git://github.com/d9su/gitpad.git",
+    "safefs": "~3.0.1"
+  },
+  "peerDependencies": {
+    "docpad": ">=6 <7"
   },
   "devDependencies": {
     "coffee-script": "~1.6.2",
-    "joe": "~1.2.0",
-    "joe-reporter-console": "~1.2.1"
+    "docpad": ">=6 <7"
   },
   "main": "./out/restapi.plugin.js",
   "scripts": {
