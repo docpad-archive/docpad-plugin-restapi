@@ -1,8 +1,5 @@
 # Export Plugin
 module.exports = (BasePlugin) ->
-	# Requires
-	safefs = require('safefs')
-
 	# Define Plugin
 	class RestAPI extends BasePlugin
 
@@ -11,68 +8,266 @@ module.exports = (BasePlugin) ->
 		config:
 			channel: '/restapi'
 			maxFilenameLen: 40
+			injectHelper: null
 
 		# Server Extend Event
 		# Add all of our REST Routes
 		serverExtend: (opts) ->
+			plugin = @
 			docpad = @docpad
-			config = @getConfig()
-			database = docpad.getDatabase()
-			docpadConfig = docpad.getConfig()
-			{server} = server
-			fsPath = docpadConfig.documentsPaths[0] + '/'
+			{server} = opts
+			{channel} = @getConfig()
 
-			# Write, Update, and Delete Helper Functions
-			findUniqueFilename = (filename) ->
+			# Send Reslut
+			sendSuccessData = (res,data,message) ->
+				res.send(
+					success: true
+					message: message or "Action completed successfully"
+					data: data
+				)
+
+			# Send Success Message
+			sendSuccessMessage = (res,message) ->
+				res.send(
+					success: true
+					message: message
+				)
+
+			# Send Error
+			sendError = (res,err) ->
+				res.send(
+					success: false
+					message: err.message+': \n'+err.stack.toString()
+				)
+
+			# Prepare file data for sending
+			prepareFile = (file, additionalFields) ->
+				# Prepare
+				result = {}
+				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'content', 'contentRendered']
+				additionalFields ?= []
+				additionalFields = [additionalFields]  unless Array.isArray(additionalFields)
+
+				# Give the user all fields if they want that
+				if additionalFields.length is 1 and additionalFields[0] is 'all'
+					result = file.toJSON()
+
+				# Otherwise give the user specific fields
+				else
+					result.meta = file.getMeta()
+					for field in fields.concat(additionalFields)
+						result[field] = file.get(field)
+
+				# return the result
+				return result
+
+			# Prepare collection data for sending
+			prepareCollection = (collection, additionalFields) ->
+				result = []
+				collection.each (file) ->
+					result.push prepareFile(file, additionalFields)
+				return result
+
+			# Get Unique Filename
+			# TODO: How should this work with files name jquery.min.js ?
+			getUniqueRelativePath = (relativePath) ->
+				# Prepare
 				count = 1
-				origFilename = filename
-				while(docpad.getFile(relativePath: filename))
-					filename = origFilename.replace(/([^ .]*)(\.)?/, '$1' + '-' + (++count) + '$2')
-				filename
+				result = relativePath
 
-			fixFilePath = (str) ->
-				str?.trim().split(' ').join('-').substring(0, config.maxFilenameLen).toLowerCase()
+				# Iterate while found
+				while docpad.getDatabase().where({relativePath: result}).length isnt 0
+					result = result.replace(/([^ .]*)(\.)?/, "$1-#{++count}$2")
 
-			getFilenameFromReq = (req) ->
-				fixFilePath(req.params[0] or req.body.filename or req.body[req.body.primaryid])
+				# Return
+				return result
 
-			getFile = (req) ->
-				docpad.getFile(relativePath: (if typeof req == 'string' then req else getFilenameFromReq(req)))
+			# Get files from request
+			# next(err, files, file)
+			# return files/file
+			getFilesFromRequest = (req,next) ->
+				# Prepare
+				files = null
+				queryOpts = null
+				sortOpts = null
+				pageOpts = null
 
-			updateFile = (file, req, res, successMsg = 'Updated') ->
-				# Setup and error out if in bad state
+				# Extract
+				relativePath = req.params[0] or null
+				collectionName = req.params.collectionName
+				mime = req.query.mime or null
+				extension = req.query.extension or null
+				page = req.query.page or null
+				limit = req.query.limit ? 10
+				offset = req.query.offset ? null
+				filter = req.query.filter
+
+				# Check
+				collection = docpad.getCollection(collectionName)
+				unless collection
+					err = new Error("Couldn't find the collection: #{collectionName}")
+					return next(err); err
+
+				# Add paging
+				if page? or limit? or offset?
+					pageOpts ?= {}
+					pageOpts.page = parseInt(page, 10)  if page?
+					pageOpts.limit = parseInt(limit, 10)  if limit?
+					pageOpts.offset = parseInt(offset, 10)  if offset?
+
+				# Add filter to query
+				if filter
+					try
+						queryOpts = JSON.parse(filter)
+					catch err
+						err = new Error("Failed to parse your custom filter: #{JSON.stringify(filter)}")
+						return next(err); err
+
+				# Add the relative path to the query
+				if relativePath
+					queryOpts ?= {}
+					queryOpts.$or =
+						relativePath: relativePath
+						relativeDirPath: relativePath.replace(/[\/\\]+$/, '')
+
+				# Add extension to query
+				if extension
+					queryOpts ?= {}
+					queryOpts.extensions = $has: extension
+
+				# Add mime to query
+				if mime
+					queryOpts ?= {}
+					queryOpts.outContentType = $like: mime
+
+				# Perform filters
+				result =
+					if queryOpts or sortOpts or pageOpts
+						collection.findAll(queryOpts, sortOpts, pageOpts)
+					else
+						collection
+
+				# Return
+				return next(null, result); result
+
+			# Create a new file from request
+			# next(err)
+			# return err/file
+			createFileFromRequest = (req,next) ->
+				# Prepare
+				docpadConfig = docpad.getConfig()
+				config = plugin.getConfig()
+
+				# Extract
+				collectionName = req.params.collectionName
+				relativePath = req.params[0]
+
+				# Check
+				collection = docpad.getCollection(collectionName)
+				unless collection
+					err = new Error("Couldn't find the collection: #{collectionName}")
+					return next(err); err
+
+				# Check
+				unless relativePath
+					err = new Error("No relativePath to place the file specified")
+					return next(err); err
+
+				# Ensure unique filename
+				relativePath = getUniqueRelativePath(relativePath)
+				fullDirPath = docpadConfig[collectionName+'Paths']?[0] or null
+				fullPath = "#{fullDirPath}/#{relativePath}"  if fullDirPath
+
+				# Set up our meta attributes
+				fileMetaAttributes = {}
+				for own key,value of req.body
+					fileMetaAttributes[key] = value  unless key in ['content']
+
+				# Set up our attributes
+				fileAttributes =
+					data: req.body.content or ''
+					relativePath: relativePath
+					fullPath: fullPath
+					meta: fileMetaAttributes
+
+				# Create the file, inject helper and add the file to the database
+				file = docpad.createModel(fileAttributes)
+
+				# Inject helper
+				config.injectHelper?.call(plugin, file)
+
+				# add it to the database
+				docpad.getDatabase().add(file)
+
+				# Write source
+				file.writeSource {cleanAttributes:true}, (err) ->
+					# Check
+					return next(err, file)  if err
+
+					# Generate
+					docpad.action 'generate', {reset:false}, (err) ->
+						return next(err, file)
+
+				# Return the created file
+				return file
+
+			# Update file from request
+			# next(err)
+			# return err/file
+			updateFileFromRequest = (req,next) ->
+				# Extract
+				collectionName = req.params.collectionName
+				relativePath = req.params[0]
+
+				# Check
+				collection = docpad.getCollection(collectionName)
+				unless collection
+					err = new Error("Couldn't find the collection: #{collectionName}")
+					return next(err); err
+
+				# Check
+				unless relativePath
+					err = new Error("No relativePath to find the file specified")
+					return next(err); err
+
+				# Find
+				file = collection.where({relativePath})
 				unless file
-					return res.send(success: false, message: 'File does not exist')
+					err = new Error("Couldn't find the file at the relative path: #{relativePath}")
+					return next(err); err
 
-				# Add any custom meta attributes
-				for own key, value of req.body
-					file.setMeta(key, value)  unless key in ['filename', 'primaryid', 'content']
+				# Set up our meta attributes
+				setMeta = false
+				fileMetaAttributes = {}
+				for own key,value of req.body
+					setMeta = true
+					fileMetaAttributes[key] = value  unless key in ['content']
+				file.setMeta(fileMetaAttributes)  if setMeta
 
-				# Return the file to the user
-				# This will trigger regeneration
-				file.writeSource {cleanAttributes: true}, (err) ->
-					console.log err  if err
-					res.send(success: !err, message: err or successMsg, filename: file.get('fullPath').replace(fsPath, ''))
+				# Set up our write source options
+				writeSourceOptions = {}
+				writeSourceOptions.cleanAttributes = true
+				writeSourceOptions.content = req.body.content  if req.body.content?
 
-			# DELETE:
-			# Remove an existing file
-			server.delete "#{config.channel}/*" , (req, res) ->
-				# Setup and error out if in bad state
-				unless filename = getFilenameFromReq(req)
-					return res.send(success: false, message: 'Please specify a filename')
-				file = getFile(filename)
-				unless file
-					return res.send(success: false, message: 'File does not exist')
+				# Write source
+				file.writeSource writeSourceOptions, (err) ->
+					# Check
+					return next(err, file)  if err
 
-				# If all good, remove the file from the DB
-				database.remove(file)
-				file.delete (err) ->
-                	console.log err  if err
-                	res.send(success: !err, message: err or 'Deleted', filename: filename)
+					# Generare
+					docpad.action 'generate', {reset:false}, (err) ->
+						return next(err, file)
 
+				# Return the created file
+				return file
+
+			###
 			# UPLOAD
 			# Handle file uploads posted to /upload
-			server.post "#{config.channel}/upload", (req, res) ->
+			server.post "#{channel}/upload", (req, res) ->
+				# Requires
+				safefs = require('safefs')
+
 				successful = []
 				failed = []
 				currentlyUploading = []
@@ -123,163 +318,96 @@ module.exports = (BasePlugin) ->
 					if req.files[key].name
 						count++
 						uploadFile req.files[key]
+
 				# If no work to be done, let the user know
 				unless count
 					res.send(error: 'No Files specified')
+			###
 
-			# CREATE or UPDATE
-			# Create or update a file in the docpad database (as well as on the file system) via the REST API
-			server.post "#{@config.channel}/*" , (req, res) ->
-				if req.body.update
-					return updateFile(getFile(req), req, res)
-
-				# Get the filename
-				unless filename = getFilenameFromReq(req)
-					return res.send(success: false, message: 'Please specify a filename')
-
-				# Set up our new document
-				documentAttributes =
-					data: req.body.content or ''
-					fullPath: fsPath + findUniqueFilename(filename)
-
-				# Create the document, inject document helper and add the document to the database
-				document = docpad.createDocument(documentAttributes)
-
-				# Inject helper and add to the db
-				config.injectDocumentHelper?.call(me, document)
-				database.add(document)
-
-				# Add metadata
-				updateFile(document, req, res, 'Saved')
-
-
-			# A helper function that takes a docpad file and outputs an object with desired fields from the file
-			fetchFields = (req, file) ->
-				# Return immediately if the user wants all attributes
-				req.query.af = req.query.af or req.query.fields or req.query.additionalFields or req.query.additionalfields
-				if (Array.isArray req.query.af and req.query.af[0] is 'all') or req.query.af is 'all'
-					return file.attributes
-
-				# Defaults
-				meta = file.meta
-				meta.content = file.attributes.content or meta.content
-				fields =
-					filename: file.attributes.id
-					url: file.attributes.url
-					meta: file.meta
-					contentType: file.attributes.outContentType
-					encoding: file.attributes.encoding
-					renderedContent: file.attributes.contentRendered
-
-				unless Array.isArray req.query.af
-					req.query.af = if req.query.af then [req.query.af] else []
-
-				# Add additional fields the user has requested to the output
-				len = req.query.af.length
-				while len--
-					field = req.query.af[len]
-					fields[field] = file.attributes[field]
-
-				# Return the data
-				return fields
-
-			# A helper function that gets a collection based on request filters and sorting options
-			getFilteredCollection = (req) ->
-				filter = {}
-				sort = {}
-				filterObject = if req.query.filter then JSON.parse(req.query.filter) else {}
-
-				# Beware: the filter is applied on the attributes of the file, not the META which is what the user is getting!
-				for own key of filterObject
-					if Array.isArray(filterterObject[key])
-						filter[key] = $in: filterObject[key]
-					else
-						filter[key] = filterObject[key]
-
-				# Add our special filters
-				for own key of req.query._filter
-					filter[key] = req.query._filter[key]
-				sort[req.query.sort or 'date'] = req.query.sortOrder or -1
-				collection = if req.params.type and req.params.type.toLowerCase() != 'all' then docpad.getCollection(req.params.type or 'documents') else database
-
-				# Return the data
-				result = collection?.findAll(filter, sort) or {models:[]}
-				return result
-
-			### READ
+			### Actions
 				a method to get files from the docpad database
 				Usage:
-					/{collectionName}/  												Get a listing of the {collectionName} collection
-					/{collectionName}/{fileName}  										See info about a specific file
-					/{collectionName}[/relative/path/]  								Get a listing of the {collectionName} collection filtered by relativePath
+					GET/DELETE        /{collectionName}[/relative/path/]                  Get or delete a listing of the {collectionName} collection filtered by relativePath
+					PUT               /{collectionName}[/relative/path]                   Put a new file at this path in this collection
+					POST              /{collectionName}[/relative/path]                   Update the file at this path
 				Optional Query String Params:
-					mime            eg  String: image                                   Searches the mime type
-					pageSize        eg  Number: 10        Default: 10					The size of listing page returned. Set to falsey for no limit.
-					page            eg  Number: 10										The listing page number to be returned
-					filter          eg  JSON: {'relativePath': $startsWith: 'a' }		A Query Engine filter to be applied to the collection being retuned
+					extension         eg  String: md                                      Searches for the extension
+					mime              eg  String: image                                   Searches the mime type
+					limit             eg  Number: 10        Default: 10                   The size of listing page returned. Set to falsey for no limit
+					offset            eg  Number: 10        Default: null                 Where to start paging from
+					page              eg  Number: 10                                      The listing page number to be returned
+					filter            eg  JSON: {'relativePath': $startsWith: 'a' }       A Query Engine filter to be applied to the collection being retuned
+					additionalFields  eg. ['relativeOutDirPath', 'contentRendered']       Extra fields to return in the data
 				Notes:
 					DocPad already provides a few collection names, including: database/all, documents, files, layouts, html, stylesheet
 			###
-			server.all "#{@config.channel}/:collectionName/*", (req,res) ->
+			server.all "#{channel}/:collectionName/*", (req,res) ->
 				# Prepare
-				files = null
-				queryOpts = null
-				sortOpts = null
-				pageOpts = null
-				findMethod = 'findAll'
+				method = req.method.toLowerCase()
 
-				# Fetch the file
-				files = docpad.getCollection(req.params.collectionName)
+				# Get
+				if method is 'get'
+					# Fetch
+					collectionName = req.params.collectionName
+					relativePath = req.params[0]
+					additionalFields = req.query.additionalFields or req.query.additionalfields
 
-				# Add filter to query
-				if req.query.filter
-					try
-						queryOpts = JSON.parse(req.query.filter)
-					catch err
-						return res.send(
-							success: false
-							message: "Failed to parse your custom filter: #{JSON.stringify(req.query.filter)}"
-						)
+					# List
+					getFilesFromRequest req, (err, files) ->
+						# Check
+						return sendError(res, err)  if err
 
-				# Add mime to query
-				if req.query.mime
-					queryOpts ?= {}
-					if req.query.mime in ['images', 'image']
-						queryOpts.outContentType = $startsWith: 'image/'
-					else if req.query.mime in ['videos', 'video']
-						queryOpts.outContentType = $startsWith: 'video/'
+						# Send
+						return sendSuccessData(res, prepareCollection(files, additionalFields), "Listing of #{collectionName} at #{relativePath} completed successfully")
+
+				# Delete
+				else if method is 'delete'
+					# Fetch
+					files = getFilesFromRequest(req)
+
+					# Check
+					if files.length is 0
+						sendSuccessMessage(res, "No files to delete")
 					else
-						queryOpts.outContentType = req.query.mime
+						# Proceed with deletion of files
+						files.flow 'deleteSource', (err) ->
+							# Send
+							return sendError(res, err)  if err
+							return sendSuccessMessage(res, "Successfully deleted: #{files.pluck('relativePath')}")
 
-				# Add paging
-				if req.query.page
-					pageOpts.page = req.query.page
-					pageOpts.size = req.query.pageSize ? 10
+				# Put
+				else if method is 'put'
+					# Fetch
+					additionalFields = req.query.additionalFields or req.query.additionalfields
+
+					# Create
+					createFileFromRequest req, (err,file) ->
+						# Check
+						return sendError(res, err)  if err
+
+						# Send
+						return sendSuccessData(res, prepareFile(file, additionalFields), "Creation completed successfully")
+
+				# Post
+				else if method is 'post'
+					# Fetch
+					additionalFields = req.query.additionalFields or req.query.additionalfields
+
+					# Update
+					updateFileFromRequest req, (err,file) ->
+						# Check
+						return sendError(res, err)  if err
+
+						# Send
+						return sendSuccessData(res, prepareFile(file, additionalFields), "Update completed successfully")
+
+				# Unknown
 				else
-					# Adjust the find method
-					findMethod = 'findOne'  if req.query.pageSize is 1
+					err = Error("Unknown method: #{method}")
+					sendError(res, err)
 
-				# Perform filters
-				files = files[findMethod](queryOpts, sortOpts, pageOpts)  if queryOpts
-
-				# LIST
-				if req.method is 'get'
-					# Fetch the result
-					result = data.toJSON()
-
-					# Send the result
-					return res.send(result)
-
-				# UPDATE
-				else if req.method in ['put', 'post', 'delete']
-					#
-
-				# UNKNOWN
-				else
-					return res.send(
-						success: false
-						message: "Unknown method #{req.method}"
-					)
+				# Done
+				return
 
 			# Chain
 			@

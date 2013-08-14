@@ -19,6 +19,7 @@
     "Neil Taylor <neil.t@myplanetdigital.com> (https://github.com/neilbaylorrulez)",
     "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
   ],
+
   "bugs": {
     "url": "https://github.com/docpad/docpad-plugin-restapi/issues"
   },
@@ -29,10 +30,7 @@
   "engines": {
     "node": ">=0.8"
   },
-  "dependencies": {
-    "gitpad": "git://github.com/d9su/gitpad.git",
-    "safefs": "~3.0.1"
-  },
+  "dependencies": {},
   "peerDependencies": {
     "docpad": ">=6 <7"
   },
