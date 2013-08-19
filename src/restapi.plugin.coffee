@@ -95,7 +95,7 @@ module.exports = (BasePlugin) ->
 
 			# Get files from request
 			# next(err, files, file)
-			# return files/file
+			# return files/files
 			getFilesFromRequest = (req,next) ->
 				# Prepare
 				files = null
@@ -160,6 +160,39 @@ module.exports = (BasePlugin) ->
 
 				# Return
 				return next(null, result); result
+
+			# Delete files from request
+			# next(err, files)
+			# return err/files
+			deleteFilesFromRequest = (req,next) ->
+				# Import
+				{TaskGroup} = require('taskgroup')
+
+				# Fetch
+				return getFilesFromRequest req, (err, files) ->
+					# Check
+					return next(err)  if err
+					return next(null, files)  if files.length is 0
+
+					# Delete and remove files from database in parallel
+					# Create task group
+					tasks = new TaskGroup().setConfig(concurrency:0).once 'complete', (err) ->
+						# Check
+						return next(err)  if err
+
+						# Generate
+						docpad.action 'generate', {reset:false}, (err) ->
+							return next(err, files)
+
+					# Add tasks
+					files.each (file) ->  tasks.addTask (complete) ->
+						file.deleteSource (err) ->
+							return complete(err)  if err
+							docpad.getDatabase().remove(file)
+							return complete()
+
+					# Run
+					tasks.run()
 
 			# Create a new file from request
 			# next(err)
@@ -375,18 +408,14 @@ module.exports = (BasePlugin) ->
 
 				# Delete
 				else if method is 'delete'
-					# Fetch
-					files = getFilesFromRequest(req)
 
-					# Check
-					if files.length is 0
-						sendSuccessMessage(res, "No files to delete")
-					else
-						# Proceed with deletion of files
-						files.flow 'deleteSource', (err) ->
-							# Send
-							return sendError(res, err)  if err
-							return sendSuccessMessage(res, "Successfully deleted: #{files.pluck('relativePath')}")
+					# List
+					deleteFilesFromRequest req, (err, files) ->
+						# Check
+						return sendError(res, err)  if err
+
+						# Send
+						return sendSuccessData(res, prepareCollection(files, additionalFields), "Delete completed successfully")
 
 				# Put
 				else if method is 'put'

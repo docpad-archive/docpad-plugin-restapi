@@ -4,6 +4,7 @@ module.exports = (testers) ->
 	pathUtil = require('path')
 	{expect} = require('chai')
 	superAgent = require('superagent')
+	superAgent['delete'] = superAgent.del
 	rimraf = require('rimraf')
 
 	# Define My Tester
@@ -95,7 +96,7 @@ module.exports = (testers) ->
 						return next()
 
 				# Create files
-				suite 'create files', (suite,test) ->
+				suite 'create', (suite,test) ->
 					# Create file test
 					test "create a new document", (done) ->
 						responseData =
@@ -160,8 +161,20 @@ module.exports = (testers) ->
 						requestWithCheck('put', "documents/posts/test.html.md", requestData, responseData, done)
 
 				# List files
-				suite 'list files', (suite,test) ->
+				suite 'list', (suite,test) ->
 					test 'list documents', (done) ->
+						responseData = files
+						requestData = {}
+						requestWithCheck('get', 'documents/', requestData, responseData, done)
+
+				# Delete files
+				suite 'delete', (suite,test) ->
+					test 'delete last document', (done) ->
+						responseData = [files.pop()]
+						requestData = {}
+						requestWithCheck('delete', 'documents/posts/test-3.html.md', requestData, responseData, done)
+
+					test 'check listing', (done) ->
 						responseData = files
 						requestData = {}
 						requestWithCheck('get', 'documents/', requestData, responseData, done)
