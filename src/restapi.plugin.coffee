@@ -73,14 +73,14 @@ module.exports = (BasePlugin) ->
 			getUniqueRelativePath = (relativePath) ->
 				# Prepare
 				result = relativePath
+				extensions = relativePath.replace(/^.+?\./, '')
 
 				# Iterate while found
-				while (file = docpad.getDatabase().where({relativePath: result})[0])
-					# test.html.md
-					# > test-2.html.md
+				while (file = docpad.getDatabase().where({relativeBase: result.replace(/\..*$/, '')})[0])
+					# test.txt
+					# > test-2.html
 					# > test-3.html.md
 					basename = file.get('basename')
-					extensions = file.get('extensions')
 					relativeDirPath = file.get('relativeDirPath')
 					parts = /^(.+?)-([0-9]+)$/.exec(basename)
 					if parts
@@ -88,7 +88,7 @@ module.exports = (BasePlugin) ->
 					else
 						basename += '-2'
 					result = relativeDirPath+'/'+basename
-					result += '.'+extensions.join('.')  if extensions?.length
+					result += '.'+extensions  if extensions
 
 				# Return
 				return result

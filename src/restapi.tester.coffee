@@ -48,26 +48,24 @@ module.exports = (testers) ->
 				docpadConfig = docpad.getConfig()
 				plugin = tester.getPlugin()
 				pluginConfig = plugin.getConfig()
+				files = []
 
 				# Prepare
 				apiUrl = "http://localhost:#{docpadConfig.port}/restapi"
 
-				# Post
-				sendFile = (method, relativePath, data, next) ->
-					# Prepare attributes
-					sendUrl = "#{apiUrl}/documents/#{relativePath}"
-
-					# Send the file
-					console.log "sending to: #{sendUrl}"
-					superAgent[method](sendUrl)
+				# Request
+				request = (method, relativeUrl, requestData, next) ->
+					absoluteUrl = apiUrl+'/'+relativeUrl
+					console.log "#{method} to #{absoluteUrl}"
+					superAgent[method](absoluteUrl)
 						.type('json').set('Accept', 'application/json')
-						.send(data)
+						.send(requestData)
 						.timeout(30*1000)
 						.end(next)
 
 				# Send and check file
-				sendFileWithCheck = (method, relativePath, data, attributes, next) ->
-					sendFile method, relativePath, data, (err, res) ->
+				requestWithCheck = (method, url, requestData, responseData, next) ->
+					request method, url, requestData, (err, res) ->
 						# Check
 						return next(err)  if err
 
@@ -75,8 +73,17 @@ module.exports = (testers) ->
 						actual = res.body
 						expected =
 							success: true
-							message: 'Creation completed successfully'
-							data: attributes
+							message:
+								switch method
+									when 'delete'
+										'Delete completed successfully'
+									when 'post'
+										'Update completed successfully'
+									when 'put'
+										'Creation completed successfully'
+									when 'get'
+										'Listing of documents at  completed successfully'
+							data: responseData
 
 						# Check
 						try
@@ -87,66 +94,77 @@ module.exports = (testers) ->
 							return next(err)
 						return next()
 
+				# Create files
+				suite 'create files', (suite,test) ->
+					# Create file test
+					test "create a new document", (done) ->
+						responseData =
+							meta:
+								title: 'hello world'
+							filename: 'test.txt'
+							relativePath: 'posts/test.txt'
+							url: '/posts/test.txt'
+							urls: ['/posts/test.txt']
+							contentType: "text/plain"
+							encoding: "utf8"
+							content: 'hello *world*'
+							contentRendered: 'hello *world*'
 
-				# Create file test
-				test "create a new document", (done) ->
-					attributes =
-						meta:
-							title: 'hello world'
-						filename: 'test.html.md'
-						relativePath: 'posts/test.html.md'
-						url: '/posts/test.html'
-						urls: ['/posts/test.html']
-						contentType: "text/x-markdown"
-						encoding: "utf8"
-						content: 'hello *world*'
-						contentRendered: "<p>hello <em>world</em></p>\n"
+						requestData =
+							title: responseData.meta.title
+							content: responseData.content
 
-					data =
-						title: attributes.meta.title
-						content: attributes.content
+						files.push(responseData)
+						requestWithCheck('put', "documents/posts/test.txt", requestData, responseData, done)
 
-					sendFileWithCheck('put', 'posts/test.html.md', data, attributes, done)
+					# Create file test
+					test "create a 2nd new document", (done) ->
+						responseData =
+							meta:
+								title: 'hello world'
+							filename: 'test-2.html'
+							relativePath: 'posts/test-2.html'
+							url: '/posts/test-2.html'
+							urls: ['/posts/test-2.html']
+							contentType: "text/html"
+							encoding: "utf8"
+							content: 'hello *world*'
+							contentRendered: 'hello *world*'
 
-				# Create file test
-				test "create a 2nd new document", (done) ->
-					attributes =
-						meta:
-							title: 'hello world'
-						filename: 'test-2.html.md'
-						relativePath: 'posts/test-2.html.md'
-						url: '/posts/test-2.html'
-						urls: ['/posts/test-2.html']
-						contentType: "text/x-markdown"
-						encoding: "utf8"
-						content: 'hello *world*'
-						contentRendered: "<p>hello <em>world</em></p>\n"
+						requestData =
+							title: responseData.meta.title
+							content: responseData.content
 
-					data =
-						title: attributes.meta.title
-						content: attributes.content
+						files.push(responseData)
+						requestWithCheck('put', "documents/posts/test.html", requestData, responseData, done)
 
-					sendFileWithCheck('put', 'posts/test.html.md', data, attributes, done)
+					# Create file test
+					test "create a 3rd new document", (done) ->
+						responseData =
+							meta:
+								title: 'hello world'
+							filename: 'test-3.html.md'
+							relativePath: 'posts/test-3.html.md'
+							url: '/posts/test-3.html'
+							urls: ['/posts/test-3.html']
+							contentType: "text/x-markdown"
+							encoding: "utf8"
+							content: 'hello *world*'
+							contentRendered: "<p>hello <em>world</em></p>\n"
 
-				# Create file test
-				test "create a 3rd new document", (done) ->
-					attributes =
-						meta:
-							title: 'hello world'
-						filename: 'test-3.html.md'
-						relativePath: 'posts/test-3.html.md'
-						url: '/posts/test-3.html'
-						urls: ['/posts/test-3.html']
-						contentType: "text/x-markdown"
-						encoding: "utf8"
-						content: 'hello *world*'
-						contentRendered: "<p>hello <em>world</em></p>\n"
+						requestData =
+							title: responseData.meta.title
+							content: responseData.content
 
-					data =
-						title: attributes.meta.title
-						content: attributes.content
+						files.push(responseData)
+						requestWithCheck('put', "documents/posts/test.html.md", requestData, responseData, done)
 
-					sendFileWithCheck('put', 'posts/test.html.md', data, attributes, done)
+				# List files
+				suite 'list files', (suite,test) ->
+					test 'list documents', (done) ->
+						responseData = files
+						requestData = {}
+						requestWithCheck('get', 'documents/', requestData, responseData, done)
 
 		# Test Custom
 		testCustom: => @clean()
