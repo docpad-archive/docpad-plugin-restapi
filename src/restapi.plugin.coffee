@@ -72,12 +72,23 @@ module.exports = (BasePlugin) ->
 			# TODO: How should this work with files name jquery.min.js ?
 			getUniqueRelativePath = (relativePath) ->
 				# Prepare
-				count = 1
 				result = relativePath
 
 				# Iterate while found
-				while docpad.getDatabase().where({relativePath: result}).length isnt 0
-					result = result.replace(/([^ .]*)(\.)?/, "$1-#{++count}$2")
+				while (file = docpad.getDatabase().where({relativePath: result})[0])
+					# test.html.md
+					# > test-2.html.md
+					# > test-3.html.md
+					basename = file.get('basename')
+					extensions = file.get('extensions')
+					relativeDirPath = file.get('relativeDirPath')
+					parts = /^(.+?)-([0-9]+)$/.exec(basename)
+					if parts
+						basename = parts[1]+'-'+(parseInt(parts[2], 10)+1)
+					else
+						basename += '-2'
+					result = relativeDirPath+'/'+basename
+					result += '.'+extensions.join('.')  if extensions?.length
 
 				# Return
 				return result
@@ -231,7 +242,7 @@ module.exports = (BasePlugin) ->
 					return next(err); err
 
 				# Find
-				file = collection.where({relativePath})
+				file = collection.where({relativePath})[0]
 				unless file
 					err = new Error("Couldn't find the file at the relative path: #{relativePath}")
 					return next(err); err
@@ -256,6 +267,8 @@ module.exports = (BasePlugin) ->
 
 					# Generare
 					docpad.action 'generate', {reset:false}, (err) ->
+						# ^ if we don't do reset, then the document we create above is not the one picked up by parsing
+						# we need to fix this
 						return next(err, file)
 
 				# Return the created file

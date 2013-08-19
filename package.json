@@ -10,7 +10,7 @@
     "rest",
     "api"
   ],
-  "author": "Bevry Pty Ltd <us@bevry.me> (http://bevry.me)",
+  "author": "Myplanet Internet Solutions Ltd. <hello@myplanetdigital.com> (http://www.myplanetdigital.com/)",
   "maintainers": [
     "Neil Taylor <neil.t@myplanetdigital.com> (https://github.com/neilbaylorrulez)",
     "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)"
@@ -35,6 +35,9 @@
     "docpad": ">=6 <7"
   },
   "devDependencies": {
+    "rimraf": "~2.2.2",
+    "chai": "~1.7.2",
+    "superagent": "~0.15.4",
     "coffee-script": "~1.6.2",
     "docpad": ">=6 <7"
   },
