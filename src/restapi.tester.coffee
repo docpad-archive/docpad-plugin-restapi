@@ -18,13 +18,10 @@ module.exports = (testers) ->
 			tester = @
 			testerConfig = tester.getConfig()
 
-			# Cleanup native comments
+			# Cleanup
 			@suite "clean restapi", (suite,test) ->
-				test 'clean documents', (next) ->
-					rimraf pathUtil.join(testerConfig.testPath, 'src', 'documents'), (err) ->
-						return next()  # ignore errors
-				test 'clean files', (next) ->
-					rimraf pathUtil.join(testerConfig.testPath, 'src', 'files'), (err) ->
+				test 'remove src', (next) ->
+					rimraf pathUtil.join(testerConfig.testPath, 'src'), (err) ->
 						return next()  # ignore errors
 
 			# Chain
@@ -90,8 +87,8 @@ module.exports = (testers) ->
 						try
 							expect(actual, 'response result should be as expected').to.deep.equal(expected)
 						catch err
-							console.log actual
-							console.log expected
+							console.log JSON.stringify(actual, null, '  ')
+							console.log JSON.stringify(expected, null, '  ')
 							return next(err)
 						return next()
 
@@ -160,9 +157,8 @@ module.exports = (testers) ->
 						files.push(responseData)
 						requestWithCheck('put', "documents/posts/test.html.md", requestData, responseData, done)
 
-				# List files
-				suite 'list', (suite,test) ->
-					test 'list documents', (done) ->
+					# Check listing
+					test 'check listing', (done) ->
 						responseData = files
 						requestData = {}
 						requestWithCheck('get', 'documents/', requestData, responseData, done)
@@ -178,6 +174,21 @@ module.exports = (testers) ->
 						responseData = files
 						requestData = {}
 						requestWithCheck('get', 'documents/', requestData, responseData, done)
+
+				# Update files
+				suite 'update', (suite,test) ->
+					test 'update last document', (done) ->
+						file = files[files.length-1]
+						file.meta.title = 'hello WORLD'
+						responseData = file
+						requestData = file.meta
+						requestWithCheck('post', 'documents/posts/test-2.html', requestData, responseData, done)
+
+					test 'check listing', (done) ->
+						responseData = files
+						requestData = {}
+						requestWithCheck('get', 'documents/', requestData, responseData, done)
+
 
 		# Test Custom
 		testCustom: => @clean()

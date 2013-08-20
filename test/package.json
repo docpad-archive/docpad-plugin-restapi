@@ -1,5 +1,5 @@
 {
-  "name": "no-skeleton.docpad",
+  "name": "restapi-test",
   "version": "0.1.0",
   "description": "New DocPad project without using a skeleton",
   "engines": {
