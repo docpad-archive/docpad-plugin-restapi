@@ -9,8 +9,8 @@ module.exports = (testers) ->
 
 	# Define My Tester
 	class MyTester extends testers.ServerTester
-		docpadConfig:
-			port: 9779
+		#docpadConfig:
+		#	port: 9779
 
 		# Cleanup
 		clean: =>
@@ -71,17 +71,20 @@ module.exports = (testers) ->
 						actual = res.body
 						expected =
 							success: true
-							message:
-								switch method
-									when 'delete'
-										'Delete completed successfully'
-									when 'post'
-										'Update completed successfully'
-									when 'put'
-										'Creation completed successfully'
-									when 'get'
-										'Listing of documents at  completed successfully'
+							message: null
 							data: responseData
+
+						# Clean
+						switch method
+							when 'delete'
+								expected.message = 'Delete completed successfully'
+							when 'post'
+								expected.message = 'Update completed successfully'
+							when 'put'
+								expected.message = 'Creation completed successfully'
+							when 'get'
+								actual.message =
+								expected.message = 'Overwritten as this changes'
 
 						# Check
 						try
@@ -91,6 +94,14 @@ module.exports = (testers) ->
 							console.log JSON.stringify(expected, null, '  ')
 							return next(err)
 						return next()
+
+				# Collections
+				suite '_collections', (suite,test) ->
+					test 'check listing', (done) ->
+						responseData = 'database documents files layouts html stylesheet'.split(' ').map (collectionName) ->
+							{id: collectionName, length: 0}
+						requestData = {}
+						requestWithCheck('get', '_collections/', requestData, responseData, done)
 
 				# Create files
 				suite 'create', (suite,test) ->

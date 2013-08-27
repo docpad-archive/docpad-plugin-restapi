@@ -308,8 +308,7 @@ module.exports = (BasePlugin) ->
 				return file
 
 			###
-			# UPLOAD
-			# Handle file uploads posted to /upload
+			# Upload a file
 			server.post "#{channel}/upload", (req, res) ->
 				# Requires
 				safefs = require('safefs')
@@ -370,23 +369,15 @@ module.exports = (BasePlugin) ->
 					res.send(error: 'No Files specified')
 			###
 
-			### Actions
-				a method to get files from the docpad database
-				Usage:
-					GET/DELETE        /{collectionName}[/relative/path/]                  Get or delete a listing of the {collectionName} collection filtered by relativePath
-					PUT               /{collectionName}[/relative/path]                   Put a new file at this path in this collection
-					POST              /{collectionName}[/relative/path]                   Update the file at this path
-				Optional Query String Params:
-					extension         eg  String: md                                      Searches for the extension
-					mime              eg  String: image                                   Searches the mime type
-					limit             eg  Number: 10        Default: 10                   The size of listing page returned. Set to falsey for no limit
-					offset            eg  Number: 10        Default: null                 Where to start paging from
-					page              eg  Number: 10                                      The listing page number to be returned
-					filter            eg  JSON: {'relativePath': $startsWith: 'a' }       A Query Engine filter to be applied to the collection being retuned
-					additionalFields  eg. ['relativeOutDirPath', 'contentRendered']       Extra fields to return in the data
-				Notes:
-					DocPad already provides a few collection names, including: database/all, documents, files, layouts, html, stylesheet
-			###
+			# Fetch the collections
+			server.all "#{channel}/_collections/", (req,res) ->
+				result = []
+				result.push {id:'database', length:docpad.getDatabase().length}
+				for own key,value of docpad.getCollections()
+					result.push {id:key, length:value.length}
+				return sendSuccessData(res, result, "Listing of collections completed successfully")
+
+			# CRUD on collections and files
 			server.all "#{channel}/:collectionName/*", (req,res) ->
 				# Prepare
 				method = req.method.toLowerCase()

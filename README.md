@@ -8,6 +8,8 @@
 
 Add a REST API to your DocPad project for interacting with DocPad files and documents
 
+[REST API Specification can be found on the Web Write Project's Specification Page](https://github.com/webwrite/spec#rest)
+
 
 ## Install
 
