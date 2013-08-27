@@ -369,6 +369,13 @@ module.exports = (BasePlugin) ->
 					res.send(error: 'No Files specified')
 			###
 
+			# CORS
+			server.all "#{channel}/*", (req,res,next) ->
+				res.header('Access-Control-Allow-Origin', '*');
+				res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+				res.header('Access-Control-Allow-Headers', 'Content-Type,X-Requested-With');
+				return next()
+
 			# Fetch the collections
 			server.all "#{channel}/_collections/", (req,res) ->
 				result = []
