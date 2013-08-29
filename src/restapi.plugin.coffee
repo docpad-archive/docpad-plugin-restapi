@@ -46,7 +46,7 @@ module.exports = (BasePlugin) ->
 				result = {}
 				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'content', 'contentRendered']
 				additionalFields ?= []
-				additionalFields = [additionalFields]  unless Array.isArray(additionalFields)
+				additionalFields = String(additionalFields).split(/[,\s]+/)  unless Array.isArray(additionalFields)
 
 				# Give the user all fields if they want that
 				if additionalFields.length is 1 and additionalFields[0] is 'all'

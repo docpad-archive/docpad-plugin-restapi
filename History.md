@@ -1,5 +1,8 @@
 ## History
 
+- v2.1.2 August 29, 2013
+	- Allow CSV values for additionaFields
+
 - v2.1.1 August 28, 2013
 	- Added CORS headers to our channel
 

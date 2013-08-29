@@ -1,6 +1,6 @@
 {
   "name": "docpad-plugin-restapi",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Add a REST API to your DocPad project for interacting with DocPad files and documents",
   "homepage": "https://github.com/docpad/docpad-plugin-restapi",
   "keywords": [
