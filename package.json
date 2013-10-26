@@ -39,8 +39,7 @@
     "rimraf": "~2.2.2",
     "chai": "~1.7.2",
     "superagent": "~0.15.4",
-    "coffee-script": "~1.6.2",
-    "docpad": ">=6 <7"
+    "coffee-script": "~1.6.2"
   },
   "main": "./out/restapi.plugin.js",
   "scripts": {
