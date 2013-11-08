@@ -44,7 +44,7 @@ module.exports = (BasePlugin) ->
 			prepareFile = (file, additionalFields) ->
 				# Prepare
 				result = {}
-				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'content', 'contentRendered']
+				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'source', 'contentRendered']
 				additionalFields ?= []
 				additionalFields = String(additionalFields).split(/[,\s]+/)  unless Array.isArray(additionalFields)
 
@@ -66,6 +66,31 @@ module.exports = (BasePlugin) ->
 				result = []
 				collection.each (file) ->
 					result.push prepareFile(file, additionalFields)
+				return result
+
+			# Prepare collections
+			prepareCollections = ->
+				result = []
+
+				addCollection = (collection) ->
+					relativePaths = []
+					#ids = []
+
+					collection.each (model) ->
+						relativePath = model.get('relativePath')
+						relativePaths.push(relativePath)  if relativePath
+						#ids.push(model.id)  if model.id
+
+					result.push
+						id: collection.options.name
+						length: collection.length
+						relativePaths: relativePaths
+						#ids: ids
+
+				addCollection(docpad.getDatabase())
+				for own key,value of docpad.getCollections()
+					addCollection(value)
+
 				return result
 
 			# Get Unique Filename
@@ -376,16 +401,22 @@ module.exports = (BasePlugin) ->
 				res.header('Access-Control-Allow-Headers', 'Content-Type,X-Requested-With');
 				return next()
 
+			# Fetch the templateData
+			server.all "#{channel}/template-data/", (req,res) ->
+				result = docpad.getTemplateData()
+				return sendSuccessData(res, result, "Listing of template data completed successfully")
+
+			# Fetch the files
+			server.all "#{channel}/files/", (req,res) ->
+				return res.redirect(301, "#{channel}/collection/database/")
+
 			# Fetch the collections
-			server.all "#{channel}/_collections/", (req,res) ->
-				result = []
-				result.push {id:'database', length:docpad.getDatabase().length}
-				for own key,value of docpad.getCollections()
-					result.push {id:key, length:value.length}
+			server.all "#{channel}/collections/", (req,res) ->
+				result = prepareCollections()
 				return sendSuccessData(res, result, "Listing of collections completed successfully")
 
 			# CRUD on collections and files
-			server.all "#{channel}/:collectionName/*", (req,res) ->
+			server.all "#{channel}/collection/:collectionName/*", (req,res) ->
 				# Prepare
 				method = req.method.toLowerCase()
 

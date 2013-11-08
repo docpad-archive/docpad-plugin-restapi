@@ -96,12 +96,12 @@ module.exports = (testers) ->
 						return next()
 
 				# Collections
-				suite '_collections', (suite,test) ->
+				suite 'collections', (suite,test) ->
 					test 'check listing', (done) ->
 						responseData = 'database documents files layouts html stylesheet'.split(' ').map (collectionName) ->
-							{id: collectionName, length: 0}
+							{id: collectionName, length: 0, relativePaths: []}
 						requestData = {}
-						requestWithCheck('get', '_collections/', requestData, responseData, done)
+						requestWithCheck('get', 'collections/', requestData, responseData, done)
 
 				# Create files
 				suite 'create', (suite,test) ->
@@ -124,7 +124,7 @@ module.exports = (testers) ->
 							content: responseData.content
 
 						files.push(responseData)
-						requestWithCheck('put', "documents/posts/test.txt", requestData, responseData, done)
+						requestWithCheck('put', "collection/documents/posts/test.txt", requestData, responseData, done)
 
 					# Create file test
 					test "create a 2nd new document", (done) ->
@@ -145,7 +145,7 @@ module.exports = (testers) ->
 							content: responseData.content
 
 						files.push(responseData)
-						requestWithCheck('put', "documents/posts/test.html", requestData, responseData, done)
+						requestWithCheck('put', "collection/documents/posts/test.html", requestData, responseData, done)
 
 					# Create file test
 					test "create a 3rd new document", (done) ->
@@ -166,25 +166,25 @@ module.exports = (testers) ->
 							content: responseData.content
 
 						files.push(responseData)
-						requestWithCheck('put', "documents/posts/test.html.md", requestData, responseData, done)
+						requestWithCheck('put', "collection/documents/posts/test.html.md", requestData, responseData, done)
 
 					# Check listing
 					test 'check listing', (done) ->
 						responseData = files
 						requestData = {}
-						requestWithCheck('get', 'documents/', requestData, responseData, done)
+						requestWithCheck('get', 'collection/documents/', requestData, responseData, done)
 
 				# Delete files
 				suite 'delete', (suite,test) ->
 					test 'delete last document', (done) ->
 						responseData = [files.pop()]
 						requestData = {}
-						requestWithCheck('delete', 'documents/posts/test-3.html.md', requestData, responseData, done)
+						requestWithCheck('delete', 'collection/documents/posts/test-3.html.md', requestData, responseData, done)
 
 					test 'check listing', (done) ->
 						responseData = files
 						requestData = {}
-						requestWithCheck('get', 'documents/', requestData, responseData, done)
+						requestWithCheck('get', 'collection/documents/', requestData, responseData, done)
 
 				# Update files
 				suite 'update', (suite,test) ->
@@ -193,12 +193,12 @@ module.exports = (testers) ->
 						file.meta.title = 'hello WORLD'
 						responseData = file
 						requestData = file.meta
-						requestWithCheck('post', 'documents/posts/test-2.html', requestData, responseData, done)
+						requestWithCheck('post', 'collection/documents/posts/test-2.html', requestData, responseData, done)
 
 					test 'check listing', (done) ->
 						responseData = files
 						requestData = {}
-						requestWithCheck('get', 'documents/', requestData, responseData, done)
+						requestWithCheck('get', 'collection/documents/', requestData, responseData, done)
 
 
 		# Test Custom
