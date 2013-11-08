@@ -410,6 +410,10 @@ module.exports = (BasePlugin) ->
 			server.all "#{channel}/files/", (req,res) ->
 				return res.redirect(301, "#{channel}/collection/database/")
 
+			# Fetch the files
+			server.all "#{channel}/file/*", (req,res) ->
+				return res.redirect(301, "#{channel}/collection/database/#{req.params[0]}")
+
 			# Fetch the collections
 			server.all "#{channel}/collections/", (req,res) ->
 				result = prepareCollections()
