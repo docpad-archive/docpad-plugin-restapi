@@ -44,7 +44,7 @@ module.exports = (BasePlugin) ->
 			prepareFile = (file, additionalFields) ->
 				# Prepare
 				result = {}
-				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'source', 'contentRendered']
+				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'content', 'contentRendered']
 				additionalFields ?= []
 				additionalFields = String(additionalFields).split(/[,\s]+/)  unless Array.isArray(additionalFields)
 
@@ -82,7 +82,7 @@ module.exports = (BasePlugin) ->
 						#ids.push(model.id)  if model.id
 
 					result.push
-						id: collection.options.name
+						name: collection.options.name
 						length: collection.length
 						relativePaths: relativePaths
 						#ids: ids

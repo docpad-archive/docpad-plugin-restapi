@@ -99,7 +99,7 @@ module.exports = (testers) ->
 				suite 'collections', (suite,test) ->
 					test 'check listing', (done) ->
 						responseData = 'database documents files layouts html stylesheet'.split(' ').map (collectionName) ->
-							{id: collectionName, length: 0, relativePaths: []}
+							{name: collectionName, length: 0, relativePaths: []}
 						requestData = {}
 						requestWithCheck('get', 'collections/', requestData, responseData, done)
 
