@@ -36,6 +36,7 @@
     "docpad": ">=6 <7"
   },
   "devDependencies": {
+    "docpad": ">=6.55.4 <7",
     "rimraf": "~2.2.2",
     "chai": "~1.7.2",
     "superagent": "~0.15.4",

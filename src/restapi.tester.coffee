@@ -98,7 +98,7 @@ module.exports = (testers) ->
 				# Collections
 				suite 'collections', (suite,test) ->
 					test 'check listing', (done) ->
-						responseData = 'database documents files layouts html stylesheet'.split(' ').map (collectionName) ->
+						responseData = 'database documents files layouts hasLayout html stylesheet'.split(' ').map (collectionName) ->
 							{name: collectionName, length: 0, relativePaths: []}
 						requestData = {}
 						requestWithCheck('get', 'collections/', requestData, responseData, done)
