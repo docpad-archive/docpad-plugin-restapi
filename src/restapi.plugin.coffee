@@ -134,7 +134,7 @@ module.exports = (BasePlugin) ->
 				mime = req.query.mime or null
 				extension = req.query.extension or null
 				page = req.query.page or null
-				limit = req.query.limit ? 10
+				limit = req.query.limit ? null
 				offset = req.query.offset ? null
 				filter = req.query.filter
 
