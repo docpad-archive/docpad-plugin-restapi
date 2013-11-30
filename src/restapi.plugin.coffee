@@ -54,9 +54,13 @@ module.exports = (BasePlugin) ->
 
 				# Otherwise give the user specific fields
 				else
-					result.meta = file.getMeta()
+					result.meta = file.getMeta().toJSON()
 					for field in fields.concat(additionalFields)
 						result[field] = file.get(field)
+
+				# Get it working
+				if result.meta.layout
+					result.meta.layout = file.get('layoutRelativePath')
 
 				# return the result
 				return result
