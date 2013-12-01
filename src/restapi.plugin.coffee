@@ -44,7 +44,7 @@ module.exports = (BasePlugin) ->
 			prepareFile = (file, additionalFields) ->
 				# Prepare
 				result = {}
-				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'content', 'contentRendered', 'date']
+				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'source', 'content', 'contentRendered', 'date']
 				additionalFields ?= []
 				additionalFields = String(additionalFields).split(/[,\s]+/)  unless Array.isArray(additionalFields)
 
