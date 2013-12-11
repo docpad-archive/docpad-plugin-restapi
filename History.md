@@ -1,5 +1,9 @@
 # History
 
+- v2.1.4 December 11, 2013
+	- Conforms to latest webwrite spec
+	- Works with latest DocPad version
+
 - v2.1.3 November 29, 2013
 	- Conforms to the recent webwrite spec changes
 
