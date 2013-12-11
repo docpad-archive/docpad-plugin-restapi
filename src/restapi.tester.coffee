@@ -86,6 +86,13 @@ module.exports = (testers) ->
 								actual.message =
 								expected.message = 'Overwritten as this changes'
 
+						# Cleanup
+						items = actual.data
+						items = [items]  if Array.isArray(items) is false
+						for item in items
+							delete item.source
+							delete item.date
+
 						# Check
 						try
 							expect(actual, 'response result should be as expected').to.deep.equal(expected)

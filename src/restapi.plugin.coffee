@@ -91,9 +91,7 @@ module.exports = (BasePlugin) ->
 						relativePaths: relativePaths
 						#ids: ids
 
-				addCollection(docpad.getDatabase())
-				for own key,value of docpad.getCollections()
-					addCollection(value)
+				docpad.eachCollection(addCollection)
 
 				return result
 
