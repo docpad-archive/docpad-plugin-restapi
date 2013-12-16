@@ -267,17 +267,22 @@ module.exports = (BasePlugin) ->
 				# Inject helper
 				config.injectHelper?.call(plugin, file)
 
-				# add it to the database
-				docpad.getDatabase().add(file)
-
-				# Write source
-				file.writeSource {cleanAttributes:true}, (err) ->
+				# Load file
+				file.action 'load', (err) ->
 					# Check
 					return next(err, file)  if err
 
-					# Generate
-					docpad.action 'generate', {reset:false}, (err) ->
-						return next(err, file)
+					# add it to the database
+					docpad.getDatabase().add(file)
+
+					# Write source
+					file.action 'writeSource', {cleanAttributes:true}, (err) ->
+						# Check
+						return next(err, file)  if err
+
+						# Generate
+						docpad.action 'generate', {reset:false}, (err) ->
+							return next(err, file)
 
 				# Return the created file
 				return file
@@ -321,15 +326,18 @@ module.exports = (BasePlugin) ->
 				writeSourceOptions.content = req.body.content  if req.body.content?
 
 				# Write source
-				file.writeSource writeSourceOptions, (err) ->
+				file.action 'writeSource', writeSourceOptions, (err) ->
 					# Check
 					return next(err, file)  if err
 
-					# Generare
-					docpad.action 'generate', {reset:false}, (err) ->
-						# ^ if we don't do reset, then the document we create above is not the one picked up by parsing
-						# we need to fix this
-						return next(err, file)
+					# Load file
+					file.action 'load', (err) ->
+						# Check
+						return next(err, file)  if err
+
+						# Generare
+						docpad.action 'generate', {reset:false}, (err) ->
+							return next(err, file)
 
 				# Return the created file
 				return file

@@ -1,5 +1,9 @@
 # History
 
+- v2.1.5 December 16, 2013
+	- We now load documents appropriatly
+	- Tests are more resilliant against DocPad collection changes
+
 - v2.1.4 December 11, 2013
 	- Conforms to latest webwrite spec
 	- Works with latest DocPad version

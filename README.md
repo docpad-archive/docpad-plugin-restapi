@@ -31,7 +31,7 @@ Once installed, the `/restapi/` URL on your website will conform to the [WebWrit
 <!-- HISTORY/ -->
 
 ## History
-[Discover the change history by heading on over to the `History.md` file.](https://github.com/docpad/docpad-plugin-restapi/blob/master/History.md#files)
+[Discover the change history by heading on over to the `HISTORY.md` file.](https://github.com/docpad/docpad-plugin-restapi/blob/master/HISTORY.md#files)
 
 <!-- /HISTORY -->
 
@@ -40,7 +40,7 @@ Once installed, the `/restapi/` URL on your website will conform to the [WebWrit
 
 ## Contribute
 
-[Discover how you can contribute by heading on over to the `Contributing.md` file.](https://github.com/docpad/docpad-plugin-restapi/blob/master/Contributing.md#files)
+[Discover how you can contribute by heading on over to the `CONTRIBUTING.md` file.](https://github.com/docpad/docpad-plugin-restapi/blob/master/CONTRIBUTING.md#files)
 
 <!-- /CONTRIBUTE -->
 
@@ -75,7 +75,7 @@ These amazing people have contributed code to this project:
 - Benjamin Lupton <b@lupton.cc> (https://github.com/balupton) - [view contributions](https://github.com/docpad/docpad-plugin-restapi/commits?author=balupton)
 - Neil Taylor <neil.t@myplanetdigital.com> (https://github.com/neilbaylorrulez) - [view contributions](https://github.com/docpad/docpad-plugin-restapi/commits?author=neilbaylorrulez)
 
-[Become a contributor!](https://github.com/docpad/docpad-plugin-restapi/blob/master/Contributing.md#files)
+[Become a contributor!](https://github.com/docpad/docpad-plugin-restapi/blob/master/CONTRIBUTING.md#files)
 
 <!-- /BACKERS -->
 
