@@ -1,3 +1,6 @@
+# Prepare
+pathUtil = require('path')
+
 # Export Plugin
 module.exports = (BasePlugin) ->
 	# Define Plugin
@@ -9,6 +12,19 @@ module.exports = (BasePlugin) ->
 			channel: '/restapi'
 			maxFilenameLen: 40
 			injectHelper: null
+			collectionPathMap: null
+
+		getCollectionPath: (collectionName) ->
+			config = @getConfig()
+			docpadConfig = @docpad.getConfig()
+
+			collectionPath = docpadConfig[collectionName+'Paths']?[0] or config.collectionPathMap?[collectionName]
+			defaultCollectionPath = docpadConfig['documentsPaths']?[0]
+
+			if collectionPath is null
+				docpad.log('warn', "The file path for the collection #{collectionName} could not be determined, defaulting to #{defaultCollectionPath}")
+
+			return collectionPath or defaultCollectionPath
 
 		# Server Extend Event
 		# Add all of our REST Routes
@@ -44,7 +60,7 @@ module.exports = (BasePlugin) ->
 			prepareFile = (file, additionalFields) ->
 				# Prepare
 				result = {}
-				fields = ['filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'source', 'content', 'contentRendered', 'date']
+				fields = ['id', 'filename', 'relativePath', 'url', 'urls', 'contentType', 'encoding', 'source', 'content', 'contentRendered', 'date']
 				additionalFields ?= []
 				additionalFields = String(additionalFields).split(/[,\s]+/)  unless Array.isArray(additionalFields)
 
@@ -246,8 +262,8 @@ module.exports = (BasePlugin) ->
 
 				# Ensure unique filename
 				relativePath = getUniqueRelativePath(relativePath)
-				fullDirPath = docpadConfig[collectionName+'Paths']?[0] or null
-				fullPath = "#{fullDirPath}/#{relativePath}"  if fullDirPath
+				collectionPath = plugin.getCollectionPath(collectionName)
+				fullPath = pathUtil.resolve(collectionPath, relativePath)  if collectionPath
 
 				# Set up our meta attributes
 				fileMetaAttributes = {}
@@ -285,7 +301,7 @@ module.exports = (BasePlugin) ->
 						docpad.addModel(file)
 
 						# Log
-						docpad.log('info', "Created file #{file.getFilePath()} from request", file.toJSON())
+						docpad.log('info', "Created file #{file.getFilePath()} from request")
 
 						# Generare
 						docpad.action 'generate', (err) ->
@@ -342,7 +358,7 @@ module.exports = (BasePlugin) ->
 						return next(err, file)  if err
 
 						# Log
-						docpad.log('info', "Updated file #{file.getFilePath()} from request", file.toJSON())
+						docpad.log('info', "Updated file #{file.getFilePath()} from request")
 
 						# Generare
 						docpad.action 'generate', (err) ->
@@ -443,7 +459,7 @@ module.exports = (BasePlugin) ->
 				# Prepare
 				method = req.method.toLowerCase()
 
-				# Get
+				# GET / READ
 				if method is 'get'
 					# Fetch
 					collectionName = req.params.collectionName
@@ -458,7 +474,7 @@ module.exports = (BasePlugin) ->
 						# Send
 						return sendSuccessData(res, prepareCollection(files, additionalFields), "Listing of #{collectionName} at #{relativePath} completed successfully")
 
-				# Delete
+				# DELETE
 				else if method is 'delete'
 
 					# List
@@ -469,7 +485,7 @@ module.exports = (BasePlugin) ->
 						# Send
 						return sendSuccessData(res, prepareCollection(files, additionalFields), "Delete completed successfully")
 
-				# Put
+				# PUT / CREATE
 				else if method is 'put'
 					# Fetch
 					additionalFields = req.query.additionalFields or req.query.additionalfields
@@ -482,7 +498,7 @@ module.exports = (BasePlugin) ->
 						# Send
 						return sendSuccessData(res, prepareFile(file, additionalFields), "Creation completed successfully")
 
-				# Post
+				# POST / UPDATE
 				else if method is 'post'
 					# Fetch
 					additionalFields = req.query.additionalFields or req.query.additionalfields

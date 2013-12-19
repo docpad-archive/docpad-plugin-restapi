@@ -1,5 +1,9 @@
 # History
 
+- v2.1.6 December 19, 2013
+	- Fixed documents always being created as new documents with InlineGUI (missing id)
+	- New files/documents will default to the documents path if a collection path was not specified
+
 - v2.1.5 December 16, 2013
 	- We now load documents appropriatly
 	- Tests are more resilliant against DocPad collection changes

@@ -92,6 +92,7 @@ module.exports = (testers) ->
 						for item in items
 							delete item.source
 							delete item.date
+							delete item.id
 
 						# Check
 						try
