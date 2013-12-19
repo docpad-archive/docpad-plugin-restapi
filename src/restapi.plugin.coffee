@@ -267,21 +267,28 @@ module.exports = (BasePlugin) ->
 				# Inject helper
 				config.injectHelper?.call(plugin, file)
 
-				# Load file
-				file.action 'load', (err) ->
+				# Set up our write source options
+				writeSourceOptions = {}
+				writeSourceOptions.content = req.body.content  if req.body.content?
+
+				# Write source
+				file.action 'writeSource', writeSourceOptions, (err) ->
 					# Check
 					return next(err, file)  if err
 
-					# add it to the database
-					docpad.getDatabase().add(file)
-
-					# Write source
-					file.action 'writeSource', {cleanAttributes:true}, (err) ->
+					# Load file
+					file.action 'load', (err) ->
 						# Check
 						return next(err, file)  if err
 
-						# Generate
-						docpad.action 'generate', {reset:false}, (err) ->
+						# Add it to the database
+						docpad.addModel(file)
+
+						# Log
+						docpad.log('info', "Created file #{file.getFilePath()} from request", file.toJSON())
+
+						# Generare
+						docpad.action 'generate', (err) ->
 							return next(err, file)
 
 				# Return the created file
@@ -322,7 +329,6 @@ module.exports = (BasePlugin) ->
 
 				# Set up our write source options
 				writeSourceOptions = {}
-				writeSourceOptions.cleanAttributes = true
 				writeSourceOptions.content = req.body.content  if req.body.content?
 
 				# Write source
@@ -335,8 +341,11 @@ module.exports = (BasePlugin) ->
 						# Check
 						return next(err, file)  if err
 
+						# Log
+						docpad.log('info', "Updated file #{file.getFilePath()} from request", file.toJSON())
+
 						# Generare
-						docpad.action 'generate', {reset:false}, (err) ->
+						docpad.action 'generate', (err) ->
 							return next(err, file)
 
 				# Return the created file
