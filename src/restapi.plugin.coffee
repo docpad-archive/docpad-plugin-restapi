@@ -303,7 +303,7 @@ module.exports = (BasePlugin) ->
 						# Log
 						docpad.log('info', "Created file #{file.getFilePath()} from request")
 
-						# Generare
+						# Generate
 						docpad.action 'generate', (err) ->
 							return next(err, file)
 
@@ -360,7 +360,7 @@ module.exports = (BasePlugin) ->
 						# Log
 						docpad.log('info', "Updated file #{file.getFilePath()} from request")
 
-						# Generare
+						# Generate
 						docpad.action 'generate', (err) ->
 							return next(err, file)
 

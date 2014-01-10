@@ -4,6 +4,6 @@ require('docpad').require('testers').test(
 		pluginPath: __dirname+'/..'
 	}
 	{
-		#logLevel: 7
+		logLevel: 7
 	}
 )
