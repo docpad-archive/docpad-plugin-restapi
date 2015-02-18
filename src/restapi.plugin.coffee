@@ -219,7 +219,7 @@ module.exports = (BasePlugin) ->
 
 					# Delete and remove files from database in parallel
 					# Create task group
-					tasks = new TaskGroup().setConfig(concurrency:0).once 'complete', (err) ->
+					tasks = new TaskGroup(concurrency:0).done (err) ->
 						# Check
 						return next(err)  if err
 

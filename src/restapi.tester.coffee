@@ -2,6 +2,7 @@
 module.exports = (testers) ->
 	# PRepare
 	pathUtil = require('path')
+	safefs = require('safefs')
 	{expect} = require('chai')
 	superAgent = require('superagent')
 	superAgent['delete'] = superAgent.del
@@ -20,9 +21,14 @@ module.exports = (testers) ->
 
 			# Cleanup
 			@suite "clean restapi", (suite,test) ->
+				srcPath = pathUtil.join(testerConfig.testPath, 'src')
+
 				test 'remove src', (next) ->
-					rimraf pathUtil.join(testerConfig.testPath, 'src'), (err) ->
+					rimraf srcPath, (err) ->
 						return next()  # ignore errors
+
+				test 'readd src', (next) ->
+					safefs.ensurePath(srcPath, next)
 
 			# Chain
 			@
