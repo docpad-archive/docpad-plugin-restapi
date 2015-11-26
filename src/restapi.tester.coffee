@@ -109,6 +109,28 @@ module.exports = (testers) ->
 							return next(err)
 						return next()
 
+				# Send and verify unauthorized response
+				requestWithUnauthorizedCheck = (method, next) ->
+          request method, 'collection/documents/posts/test.txt', {}, (err, res) ->
+            # Check
+            return next(err)  if err
+
+            # Compare
+            actual = res.body
+            expected =
+              success: false
+              message: "Unauthorized"
+
+            # Check
+            try
+              expect(res.status, 'response status was not expected').to.equal(403)
+              expect(actual, 'response result should be as expected').to.deep.equal(expected)
+            catch err
+              console.log JSON.stringify(actual, null, '  ')
+              console.log JSON.stringify(expected, null, '  ')
+              return next(err)
+            return next()
+
 				# Collections
 				suite 'collections', (suite,test) ->
 					test 'check listing', (done) ->
@@ -215,6 +237,34 @@ module.exports = (testers) ->
 						requestData = {}
 						requestWithCheck('get', 'collection/documents/', requestData, responseData, done)
 
+        # Configuration
+				suite 'configuration', (suite, test) ->
+          # Set readonly config option
+          setup = (test, complete) ->
+            pluginConfig.readonly = true
+            complete()
+
+          # Enable default REST behaviour
+          tearDown = (test, complete) ->
+            pluginConfig.readonly = false
+            complete()
+
+          # Unauthorised POST test
+          test 'check POST fails', { before: setup, after: tearDown }, (done) ->
+            requestWithUnauthorizedCheck('post', done)
+
+          # Unauthorised DELETE test
+          test 'check DELETE fails', { before: setup, after: tearDown }, (done) ->
+            requestWithUnauthorizedCheck('delete', done)
+
+          # Unauthorised PUT test
+          test 'check PUT fails', { before: setup, after: tearDown }, (done) ->
+            requestWithUnauthorizedCheck('put', done)
+
+          test 'check GET is successful', { before: setup, after: tearDown }, (done) ->
+            responseData = files
+            requestData = {}
+            requestWithCheck('get', 'collection/documents/', requestData, responseData, done)
 
 		# Test Custom
 		testCustom: => @clean()

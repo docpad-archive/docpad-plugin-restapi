@@ -56,6 +56,13 @@ module.exports = (BasePlugin) ->
 					message: err.message+': \n'+err.stack.toString()
 				)
 
+			# Send Unauthorized
+			sendUnauthorized = (res) ->
+				res.status(403).send(
+					success: false
+					message: "Unauthorized"
+				)
+
 			# Prepare file data for sending
 			prepareFile = (file, additionalFields) ->
 				# Prepare
@@ -459,8 +466,12 @@ module.exports = (BasePlugin) ->
 				# Prepare
 				method = req.method.toLowerCase()
 
+				# Check readonly
+				if plugin.config.readonly and method isnt 'get'
+					sendUnauthorized(res)
+
 				# GET / READ
-				if method is 'get'
+				else if method is 'get'
 					# Fetch
 					collectionName = req.params.collectionName
 					relativePath = req.params[0]
